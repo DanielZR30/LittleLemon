@@ -36,7 +36,8 @@ fun Home(navController: NavHostController) {
         Button(onClick = {
         }) {
             Text("Get Menu")
-        }
+        lazyColumn
+
     }
     Button(onClick = { navController.navigate(Profile.route)}) {
         Text(text = "Go to Profile")

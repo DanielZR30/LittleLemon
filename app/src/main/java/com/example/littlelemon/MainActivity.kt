@@ -24,6 +24,8 @@ import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
+    public lateinit var menu: List<MenuItemNetwork>
+
     private val httpClient = HttpClient (Android){
         install(ContentNegotiation) {
             json(contentType = ContentType("text", "plain"))
@@ -38,11 +40,11 @@ class MainActivity : ComponentActivity() {
 
         return menuResponse["menu"]?.menu ?: listOf()
     }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-
+        lifecycleScope.launch {
+            menu = getMenu()
+        }
         setContent {
             LittleLemonTheme {
                 // A surface container using the 'background' color from the theme
