@@ -24,27 +24,8 @@ import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
-    public lateinit var menu: List<MenuItemNetwork>
-
-    private val httpClient = HttpClient (Android){
-        install(ContentNegotiation) {
-            json(contentType = ContentType("text", "plain"))
-        }
-    }
-    private val menuItemsLiveData = MutableLiveData<List<MenuItemNetwork>>()
-
-    private suspend fun getMenu():List<MenuItemNetwork>{
-        val menuResponse : Map<String,MenuNetworkdata> = httpClient
-            .get("https://raw.githubusercontent.com/Meta-Mobile-Developer-PC/Working-With-Data-API/main/menu.json")
-            .body()
-
-        return menuResponse["menu"]?.menu ?: listOf()
-    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        lifecycleScope.launch {
-            menu = getMenu()
-        }
         setContent {
             LittleLemonTheme {
                 // A surface container using the 'background' color from the theme
