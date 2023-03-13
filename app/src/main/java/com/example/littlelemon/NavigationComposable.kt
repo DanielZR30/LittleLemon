@@ -25,7 +25,7 @@ fun Navigation(context: Context){
         }
 
         composable(Home.route){
-            Home(navController)
+            Home(navController,context)
         }
         composable(Profile.route){
             Profile(navController,context)
