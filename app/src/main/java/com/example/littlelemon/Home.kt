@@ -6,12 +6,10 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
-import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.Text
-import androidx.compose.material.TextField
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,7 +33,6 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.launch
-import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 
 
 private suspend fun getMenu(httpClient: HttpClient):List<MenuItemNetwork>{
@@ -56,6 +53,9 @@ fun Home(navController: NavHostController,context: Context) {
             json(contentType = ContentType("text", "plain"))
         }
     }
+    var selectedCategory by rememberSaveable() {
+        mutableStateOf("all")
+    }
 
     var search by rememberSaveable() {
         mutableStateOf("")
@@ -66,7 +66,7 @@ fun Home(navController: NavHostController,context: Context) {
         menu = getMenu(httpClient)
     }
 
-    val menuItems = menu.map { menuItem ->
+    var menuItems = menu.map { menuItem ->
         MenuItem(
             id = menuItem.id,
             title = menuItem.title,
@@ -82,42 +82,101 @@ fun Home(navController: NavHostController,context: Context) {
         menuDatabase.menuDao().insertAll(menuItems)
     }
 
+    menuItems = menuItems.filter { i->i.title.contains(search,true)
+            &&(if (selectedCategory.equals("all")) true else i.category.equals(selectedCategory,true)) }
 
     Column(modifier = Modifier.fillMaxSize()) {
 
-        RestaurantDetails()
+        RestaurantDetails(navController)
         Box(modifier = Modifier
             .fillMaxWidth()
-            .background(color= LittleLemonGreen)
-            .size(100.dp),
+            .background(color = LittleLemonGreen)
+            .size(80.dp),
             contentAlignment = Alignment.Center
         ) {
-            OutlinedTextField(
+            TextField(
                 value = search,
                 onValueChange = { search = it },
                 label = { Text(text = "Search") },
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
-                    .padding(0.dp)
                     .clip(shape = RoundedCornerShape(15.dp))
+                    .background(color = Color.White)
             )
         }
-        LazyColumn( contentPadding = PaddingValues(5.dp)) {
-            items(menu.size) { item ->
-                CardItemMenu(Item = menu[item],navController)
-            }
+        Text(
+            text = "ORDER FOR DELIVERY!",
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(10.dp)
+        )
+        
+        Box(modifier = Modifier.fillMaxWidth()) {
+            MenuCategorySelector(
+                categories = listOf("Starters", "Mains", "Desserts", "Drinks"),
+                selectedCategory = selectedCategory,
+                onCategorySelected = { category ->
+                    selectedCategory = if (selectedCategory == category) {
+                        "all"
+                    } else {
+                        category
+                    }
+                }
+            )
         }
-        println(menu.size)
-        Button(onClick = { navController.navigate(Profile.route) }) {
-            Text(text = "Go to Profile")
+
+        LazyColumn( contentPadding = PaddingValues(5.dp), modifier = Modifier.fillMaxHeight()) {
+            items(menuItems.size) { item ->
+                CardItemMenu(Item = menuItems[item],navController)
+            }
         }
     }
 }
+
 @Composable
-fun RestaurantDetails(){
+fun MenuCategorySelector(
+    categories: List<String> ,
+    selectedCategory: String?,
+    onCategorySelected: (String) -> Unit,
+) {
+    Row(
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        categories.forEach { category ->
+            CategoryButton(
+                text = category,
+                isSelected = category == selectedCategory,
+                onClick = {
+                    onCategorySelected(category)
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun CategoryButton(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(
+            backgroundColor = if (isSelected) LittleLemonYellow else Color.LightGray,
+            contentColor = if (isSelected) Color.White else LittleLemonGreen
+        ),
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Text(text = text)
+    }
+}
+
+@Composable
+fun RestaurantDetails(navController:NavHostController){
     Column(modifier = Modifier
         .fillMaxWidth()
-        .fillMaxHeight(0.4f)
+        .fillMaxHeight(0.37f)
         .background(color = LittleLemonGreen),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -125,10 +184,13 @@ fun RestaurantDetails(){
             .height(50.dp)
             .background(color = Color.White)
             .fillMaxWidth()
-            .padding(vertical = 5.dp),
-            horizontalArrangement = Arrangement.Center
+            .padding(start = 180.dp,5.dp,5.dp,5.dp),
+            horizontalArrangement = Arrangement.SpaceAround
             ) {
-            Image(painter = painterResource(id = R.drawable.littlelemonlogook), contentDescription = "Logo")
+            Image(painter = painterResource(id = R.drawable.littlelemonlogook), contentDescription = "Logo", modifier = Modifier.padding(end = 100.dp))
+            Button(onClick = { navController.navigate(Profile.route) }, colors = ButtonDefaults.buttonColors(Color.White)) {
+                Image(painter = painterResource(id = R.drawable.user), contentDescription = "user-image")
+            }
         }
         Column() {
             Text(text = "Little Lemon",
@@ -159,7 +221,7 @@ fun RestaurantDetails(){
         
 }
 @Composable
-fun CardItemMenu(Item: MenuItemNetwork,navController: NavHostController) {
+fun CardItemMenu(Item: MenuItem,navController: NavHostController) {
     val modifier = Modifier
         .border(border = BorderStroke(1.dp, Color.Black), shape = RoundedCornerShape(10.dp))
         .height(100.dp)
@@ -195,10 +257,4 @@ fun CardItemMenu(Item: MenuItemNetwork,navController: NavHostController) {
     }
 }
 
-
-@Preview
-@Composable
-fun RestaurantDetailsPreview(){
-    RestaurantDetails()
-}
 
