@@ -225,7 +225,7 @@ fun CardItemMenu(Item: MenuItem,navController: NavHostController) {
     val modifier = Modifier
         .border(border = BorderStroke(1.dp, Color.Black), shape = RoundedCornerShape(10.dp))
         .height(100.dp)
-        .clickable { navController.navigate("MenuItem") }
+        .clickable { navController.navigate("DishInformation") }
     val painter: Painter = rememberAsyncImagePainter(Item.image)
     Box(modifier = Modifier.padding(5.dp)) {
         Row(modifier = modifier) {

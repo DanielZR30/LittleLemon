@@ -10,6 +10,7 @@ import androidx.navigation.compose.composable
 @Composable
 fun Navigation(context: Context){
 
+
     val navController = rememberNavController()
     val pref: SharedPreferences = context.getSharedPreferences("Data", Context.MODE_PRIVATE)
     val email = pref.getString("email", null)
@@ -29,6 +30,9 @@ fun Navigation(context: Context){
         }
         composable(Profile.route){
             Profile(navController,context)
+        }
+        composable(DishInformation.route){
+            DishInformation(navController = navController)
         }
     }
 }
